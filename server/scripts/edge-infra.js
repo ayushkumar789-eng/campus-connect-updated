@@ -21,6 +21,11 @@
 import net from 'node:net';
 import { spawn } from 'node:child_process';
 import { setTimeout as sleep } from 'node:timers/promises';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const serverDir = path.resolve(__dirname, '..');
 
 const SERVER_PORT = 5091;
 const PROXY_PORT = 5092;
@@ -79,6 +84,7 @@ const PROD_ENV = {
 
 function bootServer(env, { waitMs = 0 } = {}) {
   const child = spawn(process.execPath, ['src/server.js'], {
+    cwd: serverDir,
     env: {
       PATH: process.env.PATH,
       NODE_ENV: 'test',

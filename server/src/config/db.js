@@ -3,19 +3,22 @@ import { env } from './env.js';
 
 mongoose.set('strictQuery', true);
 
+let connectionPromise = null;
+
 /**
  * Opens the shared Mongoose connection. Safe to call repeatedly.
  * @param {string} [uri] override, mainly used by tests
  */
 export async function connectDB(uri = env.MONGO_URI) {
   if (mongoose.connection.readyState === 1) return mongoose.connection;
+  if (connectionPromise) return connectionPromise;
 
   mongoose.connection.on('error', (err) => {
     // eslint-disable-next-line no-console
     console.error('❌ MongoDB error:', err.message);
   });
 
-  await mongoose.connect(uri, {
+  connectionPromise = mongoose.connect(uri, {
     serverSelectionTimeoutMS: 10_000,
     maxPoolSize: 20,
     // Never let Mongoose build indexes on its own in production.
@@ -30,12 +33,16 @@ export async function connectDB(uri = env.MONGO_URI) {
     // below makes it explicit and repeatable instead, and — in production —
     // additive, so it can never drop a constraint this app depends on.
     autoIndex: env.NODE_ENV === 'development' || env.NODE_ENV === 'test',
+  }).then(() => {
+    // eslint-disable-next-line no-console
+    console.log(`✅ MongoDB connected → ${mongoose.connection.name}`);
+    return mongoose.connection;
+  }).catch((err) => {
+    connectionPromise = null;
+    throw err;
   });
 
-  // eslint-disable-next-line no-console
-  console.log(`✅ MongoDB connected → ${mongoose.connection.name}`);
-
-  return mongoose.connection;
+  return connectionPromise;
 }
 
 /**
@@ -88,7 +95,10 @@ async function indexNames(model) {
   }
 }
 
+let indexesSynced = false;
+
 export async function syncIndexes() {
+  if (indexesSynced) return;
   const models = mongoose.connection.models;
   const names = Object.keys(models);
   if (!names.length) return;
@@ -130,8 +140,12 @@ export async function syncIndexes() {
     // eslint-disable-next-line no-console
     console.log(`   indexes → dropped ${dropped.length}: ${dropped.join(', ')}`);
   }
+
+  indexesSynced = true;
 }
 
 export async function disconnectDB() {
+  connectionPromise = null;
+  indexesSynced = false;
   await mongoose.connection.close();
 }

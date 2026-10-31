@@ -13,6 +13,11 @@
  * the values live in this file as throwaway test fixtures.
  */
 import { spawn } from 'node:child_process';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const serverDir = path.resolve(__dirname, '..');
 
 const BOOT_MS = 9000;
 
@@ -58,6 +63,7 @@ const CASES = [
 function boot(env) {
   return new Promise((resolve) => {
     const child = spawn(process.execPath, ['src/server.js'], {
+      cwd: serverDir,
       env: { PATH: process.env.PATH, ...env },
       stdio: ['ignore', 'pipe', 'pipe'],
     });

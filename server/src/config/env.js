@@ -22,13 +22,19 @@ dotenv.config({ path: path.join(SERVER_ROOT, '.env') });
  *     a permissive cookie policy. Production may not — and the failure must be
  *     loud rather than a silent downgrade that only surfaces under load.
  */
+export const isVercel = Boolean(process.env.VERCEL);
+const vercelDomain = process.env.VERCEL_PROJECT_PRODUCTION_URL || process.env.VERCEL_URL;
+const vercelUrl = vercelDomain ? `https://${vercelDomain}` : '';
+
 const bool = z
   .enum(['true', 'false'])
   .default('false')
   .transform((v) => v === 'true');
 
 const schema = z.object({
-  NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
+  NODE_ENV: z
+    .enum(['development', 'test', 'production'])
+    .default(isVercel ? 'production' : 'development'),
   PORT: z.coerce.number().int().positive().default(5050),
 
   MONGO_URI: z.string().min(1, 'MONGO_URI is required'),
@@ -38,12 +44,15 @@ const schema = z.object({
   JWT_EXPIRES_IN: z.string().default('15m'),
   JWT_REFRESH_EXPIRES_IN: z.string().default('7d'),
 
-  CLIENT_URL: z.string().default('http://localhost:5173'),
-  SERVER_URL: z.string().default('http://localhost:5050'),
+  CLIENT_URL: z.string().default(vercelUrl || 'http://localhost:5173'),
+  SERVER_URL: z.string().default(vercelUrl || 'http://localhost:5050'),
   // Drives the cookie policy in production: `secure` + `SameSite=None` is
   // required when the SPA and the API live on different sites, otherwise
   // `SameSite=Strict`.
-  COOKIE_SECURE: bool,
+  COOKIE_SECURE: z
+    .enum(['true', 'false'])
+    .default(isVercel ? 'true' : 'false')
+    .transform((v) => v === 'true'),
   // Extra origins for CORS, comma separated. Needed when several frontends
   // (staging, preview deployments) point at one API.
   EXTRA_CLIENT_URLS: z.string().optional().default(''),
@@ -227,12 +236,13 @@ export const hasCloudinary = Boolean(
   env.CLOUDINARY_CLOUD_NAME && env.CLOUDINARY_API_KEY && env.CLOUDINARY_API_SECRET,
 );
 
-export const UPLOAD_DIR = path.join(SERVER_ROOT, 'uploads');
+export const UPLOAD_DIR = isVercel ? '/tmp/uploads' : path.join(SERVER_ROOT, 'uploads');
 
 /** Origins allowed to make credentialed requests. */
 export const allowedOrigins = [
   ...env.CLIENT_URL.split(','),
   ...env.EXTRA_CLIENT_URLS.split(','),
+  ...(vercelUrl ? [vercelUrl] : []),
 ]
   .map((o) => o.trim())
   .filter(Boolean);

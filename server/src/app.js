@@ -4,7 +4,7 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import cookieParser from 'cookie-parser';
 import path from 'node:path';
-import { env, isProd, isTest, SERVER_ROOT, allowedOrigins, hasCloudinary } from './config/env.js';
+import { env, isProd, isTest, SERVER_ROOT, allowedOrigins, hasCloudinary, isVercel } from './config/env.js';
 import { connectDB, syncIndexes } from './config/db.js';
 import routes from './routes/index.js';
 import { errorHandler, notFoundHandler } from './middleware/error.js';
@@ -111,6 +111,7 @@ export async function createApp() {
         // Origin header at all.
         if (!origin) return callback(null, true);
         if (allowedOrigins.includes(origin)) return callback(null, true);
+        if (isVercel && origin.endsWith('.vercel.app')) return callback(null, true);
         return callback(ApiError.forbidden('Origin not allowed'));
       },
       credentials: true, // required for the refresh cookie
