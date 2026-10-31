@@ -1,0 +1,30 @@
+node_modules/
+dist/
+build/
+
+# Secrets — never commit the live env files.
+.env
+.env.*
+!.env.example
+
+# Locally uploaded files (the fallback storage provider).
+server/uploads/
+
+# Local MongoDB data directory. These are WiredTiger engine files holding the
+# actual documents, indexes and credentials-hashed passwords of whatever has
+# been written locally. Committing them would ship the whole database into git
+# history and make it impossible to remove later.
+server/data/
+
+# Test/coverage output
+coverage/
+*.lcov
+
+# Logs and editor noise
+*.log
+npm-debug.log*
+.DS_Store
+.idea/
+.vscode/
+*.swp
+.mongodb_data

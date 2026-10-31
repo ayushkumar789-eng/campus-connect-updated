@@ -1,0 +1,40 @@
+{
+  "name": "campusconnect",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "CampusConnect — a student social and academic community platform (MERN)",
+  "workspaces": [
+    "client",
+    "server"
+  ],
+  "scripts": {
+    "dev": "concurrently -n db,api,web -c yellow,cyan,magenta \"npm:dev:db\" \"npm:dev:server\" \"npm:dev:client\"",
+    "dev:db": "node scripts/local-mongo.js",
+    "lint": "eslint .",
+    "typecheck": "node scripts/check-types.js",
+    "dev:server": "npm run dev --workspace server",
+    "dev:client": "npm run dev --workspace client",
+    "build": "npm run build --workspace client",
+    "start": "npm run start --workspace server",
+    "seed": "npm run seed --workspace server",
+    "test": "bash scripts/test-all.sh && npm run test:empty-db",
+    "test:isolated": "bash scripts/test-all.sh",
+    "test:prod-gate": "node server/scripts/test-prod-gate.js",
+    "test:edge-infra": "node server/scripts/edge-infra.js",
+    "test:api": "npm run test:api --workspace server",
+    "test:notifications": "npm run test:notifications --workspace server",
+    "test:empty-db": "bash scripts/e2e-empty-db.sh"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "eslint": "^9.39.5",
+    "mongodb-memory-server": "^11.3.0"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "allowScripts": {
+    "esbuild": true
+  }
+}
