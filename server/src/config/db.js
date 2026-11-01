@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { env } from './env.js';
+import { env, isVercel } from './env.js';
 
 mongoose.set('strictQuery', true);
 
@@ -19,8 +19,8 @@ export async function connectDB(uri = env.MONGO_URI) {
   });
 
   connectionPromise = mongoose.connect(uri, {
-    serverSelectionTimeoutMS: 10_000,
-    maxPoolSize: 20,
+    serverSelectionTimeoutMS: isVercel ? 5_000 : 10_000,
+    maxPoolSize: isVercel ? 5 : 20,
     // Never let Mongoose build indexes on its own in production.
     //
     // `autoIndex` is what makes uniqueness real — the duplicate-follow guard,

@@ -194,15 +194,7 @@ export async function createApp() {
   app.use(notFoundHandler);
   app.use(errorHandler);
 
-  if (isVercel) {
-    try {
-      await connectDB();
-      await syncIndexes();
-    } catch (err) {
-      // eslint-disable-next-line no-console
-      console.error('❌ MongoDB initial connection failed:', err.message);
-    }
-  } else {
+  if (!isVercel) {
     await connectDB();
     await syncIndexes();
   }
