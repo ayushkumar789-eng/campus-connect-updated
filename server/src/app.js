@@ -159,6 +159,16 @@ export async function createApp() {
     });
   }
 
+  // Ensure DB connection is established before routing API calls
+  app.use('/api', async (_req, _res, next) => {
+    try {
+      await connectDB();
+      next();
+    } catch (err) {
+      next(err);
+    }
+  });
+
   app.use('/api', apiLimiter, routes);
 
   // In production the API can also serve the built SPA if it is present, which
@@ -173,8 +183,13 @@ export async function createApp() {
   app.use(notFoundHandler);
   app.use(errorHandler);
 
-  await connectDB();
-  await syncIndexes();
+  try {
+    await connectDB();
+    await syncIndexes();
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error('❌ MongoDB initial connection failed:', err.message);
+  }
 
   return app;
 }

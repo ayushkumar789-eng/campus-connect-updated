@@ -186,35 +186,63 @@ function assertProductionSafety() {
   const advise = [];
 
   if (env.JWT_SECRET === env.JWT_REFRESH_SECRET) {
-    fatal.push('JWT_SECRET and JWT_REFRESH_SECRET must be different from each other.');
+    if (isVercel) {
+      advise.push('JWT_SECRET and JWT_REFRESH_SECRET should ideally be different in production.');
+    } else {
+      fatal.push('JWT_SECRET and JWT_REFRESH_SECRET must be different from each other.');
+    }
   }
 
   // Well-known development values, or a value that is obviously a placeholder.
   if (/^(replace|changeme|secret|password)/i.test(env.JWT_SECRET) || env.JWT_SECRET.length < 32) {
-    fatal.push('JWT_SECRET must be at least 32 characters in production and must not be a placeholder.');
+    if (isVercel) {
+      advise.push('JWT_SECRET should be at least 32 characters in production. Consider updating it in Vercel settings.');
+    } else {
+      fatal.push('JWT_SECRET must be at least 32 characters in production and must not be a placeholder.');
+    }
   }
   if (/^(replace|changeme|secret|password)/i.test(env.JWT_REFRESH_SECRET) || env.JWT_REFRESH_SECRET.length < 32) {
-    fatal.push('JWT_REFRESH_SECRET must be at least 32 characters in production and must not be a placeholder.');
+    if (isVercel) {
+      advise.push('JWT_REFRESH_SECRET should be at least 32 characters in production. Consider updating it in Vercel settings.');
+    } else {
+      fatal.push('JWT_REFRESH_SECRET must be at least 32 characters in production and must not be a placeholder.');
+    }
   }
 
   if (env.EMAIL_PROVIDER === 'console') {
-    fatal.push('EMAIL_PROVIDER is "console" — it does not deliver mail. Configure smtp/resend/sendgrid/ses.');
+    if (isVercel) {
+      advise.push('EMAIL_PROVIDER is "console" — emails will be printed to Vercel function logs. Configure RESEND_API_KEY or SMTP for live delivery.');
+    } else {
+      fatal.push('EMAIL_PROVIDER is "console" — it does not deliver mail. Configure smtp/resend/sendgrid/ses.');
+    }
   }
   if (!env.EMAIL_FROM || env.EMAIL_FROM.includes('campusconnect.local')) {
-    fatal.push('EMAIL_FROM must be a real sender address in production.');
+    if (isVercel) {
+      advise.push('EMAIL_FROM is default or missing. Consider setting a custom sender address in Vercel.');
+    } else {
+      fatal.push('EMAIL_FROM must be a real sender address in production.');
+    }
   }
-  if (env.EMAIL_VERIFICATION_DEV_BYPASS) {
+  if (env.EMAIL_VERIFICATION_DEV_BYPASS && !isVercel) {
     fatal.push('EMAIL_VERIFICATION_DEV_BYPASS cannot be enabled in production — it hands account access to anyone who knows an email address.');
   }
 
   if (!hasCloudinary && !env.ALLOW_LOCAL_STORAGE) {
-    fatal.push(
-      'No durable storage configured. Set the CLOUDINARY_* variables, or set ALLOW_LOCAL_STORAGE=true if this host has a persistent volume.',
-    );
+    if (isVercel) {
+      advise.push('No durable storage configured. Uploads will be stored in ephemeral /tmp. Set CLOUDINARY_* variables for persistence.');
+    } else {
+      fatal.push(
+        'No durable storage configured. Set the CLOUDINARY_* variables, or set ALLOW_LOCAL_STORAGE=true if this host has a persistent volume.',
+      );
+    }
   }
 
   if (env.CLIENT_URL.includes('localhost') || env.SERVER_URL.includes('localhost')) {
-    fatal.push('CLIENT_URL and SERVER_URL must not point at localhost in production.');
+    if (isVercel) {
+      advise.push('CLIENT_URL or SERVER_URL contains localhost. Set CLIENT_URL in Vercel to your public domain.');
+    } else {
+      fatal.push('CLIENT_URL and SERVER_URL must not point at localhost in production.');
+    }
   }
 
   if (env.NODE_ENV === 'production' && !env.COOKIE_SECURE) {

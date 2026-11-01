@@ -58,6 +58,16 @@ export function errorHandler(err, req, res, _next) {
     code = 'INVALID_ID';
   }
 
+  // MongoDB unavailable or buffering timeout
+  if (
+    err?.name === 'MongooseServerSelectionError' ||
+    (err instanceof mongoose.Error && /buffering/i.test(err.message))
+  ) {
+    statusCode = 503;
+    message = 'Database is currently unreachable. Please check your MongoDB connection and IP whitelist.';
+    code = 'DATABASE_UNAVAILABLE';
+  }
+
   // Schema-level validation.
   if (err instanceof mongoose.Error.ValidationError) {
     statusCode = 400;
