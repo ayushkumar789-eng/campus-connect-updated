@@ -25,6 +25,8 @@ dotenv.config({ path: path.join(SERVER_ROOT, '.env') });
 export const isVercel = Boolean(process.env.VERCEL);
 const vercelDomain = process.env.VERCEL_PROJECT_PRODUCTION_URL || process.env.VERCEL_URL;
 const vercelUrl = vercelDomain ? `https://${vercelDomain}` : '';
+const clientBoundUrl = process.env.CLIENT_SERVICE_URL || vercelUrl || 'http://localhost:5173';
+const serverBoundUrl = process.env.SERVER_SERVICE_URL || vercelUrl || 'http://localhost:5050';
 
 const bool = z
   .enum(['true', 'false'])
@@ -44,8 +46,8 @@ const schema = z.object({
   JWT_EXPIRES_IN: z.string().default('15m'),
   JWT_REFRESH_EXPIRES_IN: z.string().default('7d'),
 
-  CLIENT_URL: z.string().default(vercelUrl || 'http://localhost:5173'),
-  SERVER_URL: z.string().default(vercelUrl || 'http://localhost:5050'),
+  CLIENT_URL: z.string().default(clientBoundUrl),
+  SERVER_URL: z.string().default(serverBoundUrl),
   // Drives the cookie policy in production: `secure` + `SameSite=None` is
   // required when the SPA and the API live on different sites, otherwise
   // `SameSite=Strict`.
@@ -242,6 +244,7 @@ export const UPLOAD_DIR = isVercel ? '/tmp/uploads' : path.join(SERVER_ROOT, 'up
 export const allowedOrigins = [
   ...env.CLIENT_URL.split(','),
   ...env.EXTRA_CLIENT_URLS.split(','),
+  ...(process.env.CLIENT_SERVICE_URL ? [process.env.CLIENT_SERVICE_URL] : []),
   ...(vercelUrl ? [vercelUrl] : []),
 ]
   .map((o) => o.trim())

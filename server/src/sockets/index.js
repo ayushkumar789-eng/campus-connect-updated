@@ -1,5 +1,5 @@
 import { Server } from 'socket.io';
-import { env } from '../config/env.js';
+import { env, allowedOrigins } from '../config/env.js';
 import { verifyAccessToken } from '../modules/auth/index.js';
 import { User } from '../modules/users/User.model.js';
 import { Conversation } from '../modules/messages/Conversation.model.js';
@@ -13,7 +13,7 @@ const presence = new Map();
 
 export function initSockets(httpServer) {
   io = new Server(httpServer, {
-    cors: { origin: env.CLIENT_URL.split(',').map((o) => o.trim()), credentials: true },
+    cors: { origin: allowedOrigins, credentials: true },
   });
 
   io.use(async (socket, next) => {
