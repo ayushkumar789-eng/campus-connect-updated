@@ -1,13 +1,16 @@
 import http from 'node:http';
 import { createApp } from './app.js';
-import { env, isProd } from './config/env.js';
+import { env, isProd, isVercel } from './config/env.js';
 import { shutdownHandler } from './middleware/error.js';
 import { disconnectDB } from './config/db.js';
 import { storageProvider } from './infrastructure/storage/storage.service.js';
 import { closeSockets, initSockets } from './sockets/index.js';
 
-const start = async () => {
-  const app = await createApp();
+const app = await createApp();
+
+// In standard server mode (local dev, Render, Docker), spin up the HTTP listener.
+// On Vercel, the exported Express app is invoked serverlessly per request.
+if (!isVercel) {
   const server = http.createServer(app);
 
   // Socket.IO is wired up in Phase 4; the flag keeps Phase 1–2 boots clean
@@ -52,10 +55,6 @@ const start = async () => {
       process.exit(1);
     });
   }
-};
+}
 
-start().catch((err) => {
-  // eslint-disable-next-line no-console
-  console.error('Failed to start server:', err);
-  process.exit(1);
-});
+export default app;
