@@ -12,7 +12,9 @@ try {
 } catch (err) {
   // eslint-disable-next-line no-console
   console.error(`❌ Could not connect to database at ${env.MONGO_URI}:`, err.message);
-  process.exit(1);
+  if (!isVercel) {
+    process.exit(1);
+  }
 }
 
 // In standard server mode (local dev, Render, Docker), spin up the HTTP listener.

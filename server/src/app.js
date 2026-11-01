@@ -160,12 +160,23 @@ export async function createApp() {
   }
 
   // Ensure DB connection is established before routing API calls
-  app.use('/api', async (_req, _res, next) => {
+  app.use('/api', async (_req, res, next) => {
+    if (!env.MONGO_URI) {
+      return res.status(503).json({
+        success: false,
+        code: 'MISSING_MONGO_URI',
+        message: 'MONGO_URI is missing. Please add your MongoDB Atlas connection string in Vercel Settings → Environment Variables.',
+      });
+    }
     try {
       await connectDB();
       next();
     } catch (err) {
-      next(err);
+      return res.status(503).json({
+        success: false,
+        code: 'DATABASE_UNAVAILABLE',
+        message: `Database connection failed: ${err.message}. Please check MongoDB Atlas Network Access (0.0.0.0/0) and credentials.`,
+      });
     }
   });
 
