@@ -1,5 +1,5 @@
 import { Server } from 'socket.io';
-import { env, allowedOrigins } from '../config/env.js';
+import { allowedOrigins } from '../config/env.js';
 import { verifyAccessToken } from '../modules/auth/index.js';
 import { User } from '../modules/users/User.model.js';
 import { Conversation } from '../modules/messages/Conversation.model.js';
